@@ -1,13 +1,13 @@
 #!/bin/sh
 
-#  UpdateLocalizableStrings.sh
+#  FindInFile.sh
 #  
 #
 #  Created by Gregory Hill on 2/28/13.
 #
 # Usage:
-# ./UpdateLocalizableStrings.sh <baseDir>
-#  e.g. ~/Desktop/Code/Pandora/dev/Pandora
+# ./FindInFile.sh <baseDir>
+#	e.g. ~/Desktop/Code/Pandora/dev/Pandora
 
 
 baseDir=$1
@@ -18,7 +18,7 @@ stringsFile="Localizable.strings"
 baseDirLength=$(echo ${#baseDir})
 
 if [ $baseDirLength -eq 0 ]; then
-	echo "UpdateLocalizableStrings.sh <baseDir>"
+	echo "FindInFile.sh <baseDir>"
 else
 
 	# First, loop through all *.m files and find any occurance of NSLocalizedString().
@@ -36,6 +36,7 @@ else
 
 	# change directory into fullPath
 	cd "$fullPath"
+	pwd
 
 	find . -type f -name "*.m*" -print > listOfFiles.txt
 
@@ -54,50 +55,57 @@ else
 
 		# Make sure we aren't touching Base.lproj directory
 		if [ $length -eq 0 ]; then
-		# change directory into localeStringsDir
-		cd $localeStringsDir
+			# change directory into localeStringsDir
+			cd "$localeStringsDir"
 
-		if [ -f $stringsFile ];
-		then
-			echo "File $localeStringsDir/$stringsFile exists"
-		else
-			echo "File $localeStringsDir/$stringsFile does not exist"
+			echo "cd down to:"
+			pwd
 
-			echo "" > $stringsFile
-		fi
-
-		# For each Localizable.strings file, loop through output.txt and parse out the key/value pairs for the localized strings.
-		# If the key already exists in the file, then skip; otherwise, append the key/value (in proper format) to the end of the file.
-
-		while read LINE
-		do
-			foundLocalizedString=$(echo "$LINE" | grep -o "NSLocalizedString(@\"[[:alnum:]]*\", @\"[a-zA-Z0-9 !@#\$%\^&\*()\.,-\+']*\")")
-
-			foundKey=$(echo "$foundLocalizedString" | grep -o "(@\"[[:alnum:]]*\"")
-			keyStart="\""
-			finalKey=$(echo "$foundKey" | grep -o "$keyStart.*")
-
-			$(grep -q "$finalKey" $stringsFile)
-
-			if [ $? -eq 1 ]; then
-				echo "****** key is New: $finalKey"
-
-				foundComment=$(echo "$foundLocalizedString" | grep -o "@\"[a-zA-Z0-9 !@#\$%\^&\*()\.,-\+']*\")")
-				commentStart="\""
-				intermediateComment=$(echo "$foundComment" | grep -o "$commentStart.*")
-
-				finalComment=$(echo "$intermediateComment" | sed "s/)//")
-
-				echo "/* $finalComment */" >> $stringsFile
-				echo "$finalKey = $finalComment;\n" >> $stringsFile
+			if [ -f $stringsFile ]; then
+				echo "File $localeStringsDir/$stringsFile exists"
 			else
-				echo "key Exists: $finalKey"
+				echo "File $localeStringsDir/$stringsFile does not exist"
+
+				echo "" > $stringsFile
 			fi
 
-		done < "../output.txt"
+			# For each Localizable.strings file, loop through output.txt and parse out the key/value pairs for the localized strings.
+			# If the key already exists in the file, then skip; otherwise, append the key/value (in proper format) to the end of the file.
 
-		# change directory back to baseDir
-		cd ..
+			while read LINE
+			do
+				foundLocalizedString=$(echo "$LINE" | grep -o "NSLocalizedString(@\"[[:alnum:]]*\", @\"[a-zA-Z0-9 !@#\$%\^&\*()\.,-\+']*\")")
+
+				foundKey=$(echo "$foundLocalizedString" | grep -o "(@\"[[:alnum:]]*\"")
+				keyStart="\""
+				finalKey=$(echo "$foundKey" | grep -o "$keyStart.*")
+
+				$(grep -q "$finalKey" $stringsFile)
+
+				if [ $? -eq 1 ]; then
+					echo "****** key is New: $finalKey"
+
+					foundComment=$(echo "$foundLocalizedString" | grep -o "@\"[a-zA-Z0-9 !@#\$%\^&\*()\.,-\+']*\")")
+					commentStart="\""
+					intermediateComment=$(echo "$foundComment" | grep -o "$commentStart.*")
+
+					finalComment=$(echo "$intermediateComment" | sed "s/)//")
+
+					echo "/* $finalComment */" >> $stringsFile
+					echo "$finalKey = $finalComment;\n" >> $stringsFile
+				else
+					echo "key Exists: $finalKey"
+				fi
+
+			done < "../../output.txt"
+
+			# change directory back to baseDir
+			cd ../..
+
+			echo "cd back up ..:"
+			pwd
+
+			echo "*!*!*!*!!!!"
 
 		else
 			echo "Ignoring: $localeStringsDir"
