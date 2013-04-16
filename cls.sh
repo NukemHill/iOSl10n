@@ -13,7 +13,7 @@ baseDir=$1
 baseDirLength=$(echo ${#baseDir})
 
 if [ $baseDirLength -eq 0 ]; then
-  echo "cls.sh <rootPath>"
+	echo "cls.sh <rootPath>"
 else
 	storyboardExt=".storyboard"
 	stringsExt=".strings"
